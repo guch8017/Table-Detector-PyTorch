@@ -2,10 +2,16 @@ import cv2
 import torch
 import numpy as np
 from PIL import Image
-from .utils import estimate_skew_angle, image_location_sort_box, xy_rotate_box, solve
-from .builder import TableBuilder
-from .line import table_line
-from .model import LineDetector
+try:
+    from .utils import estimate_skew_angle, image_location_sort_box, xy_rotate_box, solve
+    from .builder import TableBuilder
+    from .line import table_line
+    from .model import LineDetector
+except ImportError:
+    from utils import estimate_skew_angle, image_location_sort_box, xy_rotate_box, solve
+    from builder import TableBuilder
+    from line import table_line
+    from model import LineDetector
 from skimage import measure
 
 
@@ -120,9 +126,5 @@ class TableExtractor(object):
             self.child_images.append(child_img)
 
     def get_builder(self):
-        builder = TableBuilder(self.table_cell_boxes)
+        builder = TableBuilder(self.table_cell_boxes, self.img)
         return builder
-
-    def table_ocr(self):
-        """use ocr and match ceil"""
-        pass

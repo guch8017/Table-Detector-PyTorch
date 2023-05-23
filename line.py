@@ -1,9 +1,13 @@
 import cv2
 import numpy as np
 import torch
-from .utils import letterbox_image, solve
 from skimage import measure
 from scipy.spatial import distance as dist
+
+try:
+    from .utils import letterbox_image, solve
+except ImportError:
+    from utils import letterbox_image, solve
 
 
 def _order_points(pts):

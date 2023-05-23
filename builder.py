@@ -1,4 +1,7 @@
-from .utils import xy_rotate_box
+try:
+    from .utils import xy_rotate_box
+except ImportError:
+    from utils import xy_rotate_box
 import cv2
 import numpy as np
 
@@ -8,10 +11,12 @@ class TableBuilder:
     表格重建
     """
 
-    def __init__(self, ceil_boxes, interval=10):
+    def __init__(self, ceil_boxes, image, interval=10):
         """
-        @:param ceil_boxes: [[x0,y0,x1,y1,x2,y2,x3,y3,x4,y4]]
+        :param ceil_boxes: [[x0,y0,x1,y1,x2,y2,x3,y3,x4,y4]]
+        :param image: Original image
         """
+        self.image = image
         self.cor = []
         self.ceil_boxes = ceil_boxes
         self.diag_boxes = [[int(x[0]), int(x[1]), int(x[4]), int(x[5])] for x in ceil_boxes]
