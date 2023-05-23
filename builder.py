@@ -1,8 +1,11 @@
 try:
     from .utils import xy_rotate_box
+    from .ocr import OCREngine
 except ImportError:
     from utils import xy_rotate_box
+    from ocr import OCREngine
 import cv2
+from tqdm import tqdm
 import numpy as np
 
 
@@ -25,9 +28,10 @@ class TableBuilder:
 
     def batch(self):
         self.cor = []
-        row_cor = self.table_line_cor(self.diag_boxes, axis='row', interval=self.interval)
-        col_cor = self.table_line_cor(self.diag_boxes, axis='col', interval=self.interval)
-        cor = [{'row': line[1], 'col': line[0]} for line in zip(row_cor, col_cor)]
+        row_cor, row_ind = self.table_line_cor(self.diag_boxes, axis='row', interval=self.interval)
+        col_cor, col_ind = self.table_line_cor(self.diag_boxes, axis='col', interval=self.interval)
+        # row: [r0, r1], col: [c0, c1], box: [TL, BR]
+        cor = [{'row': line[1], 'col': line[0], 'box': [(row_ind[line[0][0]], col_ind[line[1][0]]), (row_ind[line[0][1]], col_ind[line[1][1]])]} for line in zip(row_cor, col_cor)]
         self.cor = cor
 
     @staticmethod
@@ -57,12 +61,20 @@ class TableBuilder:
         edges_map_index = [line[1] for line in edges_map_list]
         edges_map_index = list(set(edges_map_index))
         edges_map_index = {x: ind for ind, x in enumerate(sorted(edges_map_index))}
+        ind2edges = {ind: x for x, ind in edges_map_index.items()}
 
         if axis == 'col':
             cor = [[edges_map_index[edges_map[line[1]]], edges_map_index[edges_map[line[3]]]] for line in lines]
         else:
             cor = [[edges_map_index[edges_map[line[0]]], edges_map_index[edges_map[line[2]]]] for line in lines]
-        return cor
+        return cor, ind2edges
+
+    def do_ocr(self, engine: OCREngine):
+        print('Running ocr...')
+        for cell in tqdm(self.cor):
+            p1, p2 = cell['box']
+            text = engine.ocr(self.image[p1[1]:p2[1], p1[0]:p2[0], :])
+            cell['text'] = text
 
     def to_excel(self):
         import xlwt
@@ -85,9 +97,9 @@ class TableBuilder:
                     pass
         return workbook
 
-    def to_image(self, shape, color=(255, 255, 255)):
-        tmp = np.zeros(shape, dtype=np.uint8)
-        h, w, _ = shape
+    def to_image(self, color=(255, 255, 255)):
+        tmp = np.zeros(self.image.shape, dtype=np.uint8)
+        h, w, _ = tmp
 
         for box in self.ceil_boxes:
             if type(box) is dict:
