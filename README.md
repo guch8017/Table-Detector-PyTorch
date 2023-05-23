@@ -24,7 +24,8 @@ import cv2
 from table_extractor import TableExtractor
 
 image = cv2.imread('PATH/TO/YOUR/TABLE/IMAGE.jpg')
-extractor = TableExtractor(image, r'PATH/TO/MODEL_CHECKPOINT.pth', 'cpu')
+extractor = TableExtractor(r'PATH/TO/MODEL_CHECKPOINT.pth', 'cpu')  # If you want to use gpu, then modify 'cpu' to 'cuda'
+extractor.set_image(image)  # Set the image to be detected and perform detection
 builder = extractor.get_builder()
 # Save the table-cell outline as an image
 cv2.imwrite('test.png', builder.to_image(image.shape))

@@ -10,28 +10,39 @@ from skimage import measure
 
 
 class TableExtractor(object):
-    def __init__(self, img: np.ndarray, model_path: str, model_device='cuda:0', table_line_size=(1024, 1024), eval_rotate: bool = False):
+    def __init__(self, model_path: str, model_device='cuda:0', table_line_size=(1024, 1024), eval_rotate: bool = False):
         """
-        表格提取
-        :param img: np.ndarray [h,w,c]
+        初始化表格提取器以及UNet模型
         :param table_line_size:
         :param eval_rotate: 是否进行旋转修正
         """
         # 表格检测器，此处跳过，后续用微软的DocTransformer代替
+        self.eval_rotate_ = eval_rotate
         self.child_images = []
         self.table_cell_boxes = []
-        self.scores = [0]
-        self.ad_boxes = [[0, 0, img.shape[1], img.shape[0]]]
-        self.boxes = [[0, 0, img.shape[1], img.shape[0]]]
+        self.scores = []
+        self.ad_boxes = []
+        self.boxes = []
         self.degree = 0  # 表格旋转检测  +-5度
-        self.img = img
+        self.img = None
         self.table_line_size = table_line_size
         model = LineDetector(2, use_bias=False).to(model_device)
         model.load_state_dict(torch.load(model_path, map_location=model_device))
         model.eval()
         self.device = model_device
         self.model = model
-        if eval_rotate:
+
+    def set_image(self, image: np.ndarray):
+        """
+        设置图片并进行表格提取
+        :param image: np.ndarray [h,w,c]
+        :return:
+        """
+        self.img = image
+        self.scores = [0]
+        self.ad_boxes = [[0, 0, image.shape[1], image.shape[0]]]
+        self.boxes = [[0, 0, image.shape[1], image.shape[0]]]
+        if self.eval_rotate_:
             self.eval_rotate()
         self.extract_table_cell()
 
@@ -95,7 +106,8 @@ class TableExtractor(object):
             x_min, y_min, x_max, y_max = [int(x) for x in self.ad_boxes[i]]
 
             child_img = self.img[y_min:y_max, x_min:x_max]
-            row_boxes, col_boxes = table_line(child_img[..., ::-1], self.model, self.device, size=self.table_line_size, h_prob=0.5, v_prob=0.5)
+            row_boxes, col_boxes = table_line(child_img[..., ::-1], self.model, self.device, size=self.table_line_size,
+                                              h_prob=0.5, v_prob=0.5)
             tmp = np.zeros(self.img.shape[:2], dtype='uint8')
             tmp = self.draw_lines(tmp, row_boxes + col_boxes, color=255, lineW=2)
             labels = measure.label(tmp < 255, connectivity=2)  # 8连通区域标记
