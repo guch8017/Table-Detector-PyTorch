@@ -140,7 +140,7 @@ class TableBuilder:
         return workbook
 
     def to_image(self, color=(255, 255, 255)):
-        tmp = np.zeros_like(self.image.shape)
+        tmp = np.zeros_like(self.image)
         h, w, _ = tmp.shape
 
         for box in self.ceil_boxes:
