@@ -15,7 +15,7 @@ pip install -r requirements.txt
 ```
 
 ### 2. Download model checkpoint
-TODO
+* Baidu Net-disk: [table-detect.pth](https://pan.baidu.com/s/12gXSFcADXhlYK6vymlcbuQ) Password: h2o6 
 
 ### 3. Detect a table
 
