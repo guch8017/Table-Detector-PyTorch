@@ -92,7 +92,7 @@ class TableBuilder:
         """
         if self.engine is None:
             raise Exception('OCR engine is not set')
-        if not isinstance(process, int) and process < 1:
+        if not isinstance(process, int) or process < 1:
             raise ValueError('Process must be a positive integer')
         print('Running ocr...')
         if process == 1:
@@ -132,8 +132,8 @@ class TableBuilder:
         return workbook
 
     def to_image(self, color=(255, 255, 255)):
-        tmp = np.zeros(self.image.shape, dtype=np.uint8)
-        h, w, _ = tmp
+        tmp = np.zeros_like(self.image.shape)
+        h, w, _ = tmp.shape
 
         for box in self.ceil_boxes:
             if type(box) is dict:
