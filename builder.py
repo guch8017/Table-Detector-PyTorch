@@ -1,4 +1,5 @@
 import multiprocessing
+import os.path
 
 try:
     from .utils import xy_rotate_box
@@ -80,6 +81,13 @@ class TableBuilder:
         else:
             cor = [[edges_map_index[edges_map[line[0]]], edges_map_index[edges_map[line[2]]]] for line in lines]
         return cor, ind2edges
+
+    def extract_cell_img(self, dir_name: str):
+        os.makedirs(dir_name, exist_ok=True)
+        for ind, cell in enumerate(self.cor):
+            p1, p2 = cell['box']
+            cell_img = self.image[p1[1]:p2[1], p1[0]:p2[0], :]
+            cv2.imwrite(os.path.join(dir_name, f'{ind}.jpg'), cell_img)
 
     def set_ocr_engine(self, engine: OCREngine):
         self.engine = engine
