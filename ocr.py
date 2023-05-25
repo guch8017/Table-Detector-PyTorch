@@ -5,6 +5,7 @@ You can deploy one by following https://github.com/PaddlePaddle/PaddleOCR/blob/r
 You can use your own OCR engine like by implementing the OCR method.
 """
 from abc import ABC
+import numpy as np
 import requests
 import base64
 import json
@@ -28,15 +29,20 @@ class OCREngine(ABC):
 
 
 class PaddleOCREngine(OCREngine):
-    def __init__(self, api: str = "http://localhost:9292/ocr/prediction", **kwargs):
+    def __init__(self, api: str = "http://localhost:9292/ocr/prediction", scale: int = None, **kwargs):
         """
-        Init your ocr engine here
+        Paddle OCR Engine
+        :param api: The API endpoint of the OCR service
+        :param scale: The scale of the image to be sent to the OCR service
         """
         super().__init__(**kwargs)
         self.api = api
+        self.scale = scale
         self.header = {"Content-type": "application/json"}
 
-    def ocr(self, image) -> str:
+    def ocr(self, image: np.ndarray) -> str:
+        if self.scale is not None:
+            image = cv2.resize(image, None, fx=self.scale, fy=self.scale)
         image_bytes = cv2.imencode('.jpg', image)[1]
         image_base64 = base64.b64encode(image_bytes.tostring()).decode('utf8')
         data = {"feed": [{"x": image_base64}], "fetch": ["res"]}
